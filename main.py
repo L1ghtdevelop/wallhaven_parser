@@ -17,11 +17,11 @@ class Parser:
     def get_url_rating(self):
         match self.rating.lower():
             case "sfw":
-                self.url += "latest?categories=111&purity=100&sorting=date_added&order=desc&page=2"
+                self.url += "search?categories=111&purity=100&sorting=date_added&order=desc&page=2"
             case "sketchy":
-                self.url += "latest?categories=111&purity=010&sorting=date_added&order=desc&page=2"
+                self.url += "search?categories=111&purity=010&sorting=date_added&order=desc&page=2"
             case "nsfw":
-                self.url += "latest?categories=111&purity=001&sorting=date_added&order=desc&page=2"
+                self.url += "search?categories=111&purity=001&sorting=date_added&order=desc&page=2"
     
     def get_link_images(self):
         self.get_url_rating()
