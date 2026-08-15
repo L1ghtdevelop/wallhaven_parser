@@ -1,3 +1,6 @@
+import os
+import time
+import random
 import logging
 import bs4
 import requests
@@ -14,6 +17,8 @@ class Parser:
         self.to_pages = pages
         self.page = 1
         self.num_img = 1
+        self.session = requests.Session()
+        self.session.headers.update(self.headers)
 
     def get_url_rating(self):
         match self.rating.lower():
@@ -24,12 +29,11 @@ class Parser:
 
     def get_page_list(self):
         logger.info(self.url)
-        response = requests.get(self.url, headers=self.headers, timeout=10)
+        time.sleep(0.5)
+        response = self.session.get(self.url, headers=self.headers, timeout=30)
         response.raise_for_status()
         soup = bs4.BeautifulSoup(response.content, "lxml")
-        image_tag = soup.find_all('a')
-        response.close()
-        return image_tag
+        return soup.find_all('a')
 
     def get_image_page(self, images):
         img_arr = []
@@ -37,11 +41,16 @@ class Parser:
             if image_link.has_attr("class") and image_link["class"][0] == "preview":
                 logger.info(image_link)
                 link = str(image_link["href"])
-                image_response = requests.get(link, headers=self.headers, timeout=10)
+                time.sleep(random.uniform(0.2, 0.8))
+                image_response = self.session.get(link, headers=self.headers, timeout=30)
+                if image_response.status_code == 429:
+                    wait = int(image_response.headers.get('Retry-After', 5))
+                    logger.warning(f"429 on {link}, waiting {wait}")
+                    time.sleep(wait)
+                    continue
+                image_response.raise_for_status()
                 soup = bs4.BeautifulSoup(image_response.content, "lxml")
-                logger.info(soup.markup)
                 resource = soup.find_all("img")
-                image_response.close()
                 for img in resource:
                     if img.has_attr("id") and img["id"] == "wallpaper":
                         img_arr.append(img["src"])
@@ -49,11 +58,11 @@ class Parser:
 
     def download_image(self, source):
         for img in source:
-            link = requests.get(img)
+            link = self.session.get(img)
             self.open_write_file(link.content)
 
     def open_write_file(self, content):
-        with open(f'src/{self.rating.lower()}/img{self.num_img}.jpg', 'wb') as o:
+        with open(f'src/{self.rating.lower()}/{self.page}/img{self.num_img}.jpg', 'wb') as o:
             self.num_img += 1
             o.write(content)
 
@@ -61,16 +70,16 @@ class Parser:
         self.get_url_rating()
 
         while self.page <= self.to_pages:
+            os.makedirs(f"src/{self.rating}/{self.page}", exist_ok=True)
             resource = self.get_page_list()
             images = self.get_image_page(resource)
             self.download_image(images)
             self.page += 1
             self.get_url_rating()
 
-
 if __name__ == "__main__":
     logging.basicConfig(filename='wallhaven_parser.log', level=logging.INFO)
-    parser = Parser("sfw", 2)
+    parser = Parser("sketchy", 15)
     parser.parse_pages()
 
 
