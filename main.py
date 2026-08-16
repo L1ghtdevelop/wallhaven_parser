@@ -1,4 +1,6 @@
 import os
+import sys
+import argparse
 import time
 import random
 import logging
@@ -56,13 +58,13 @@ class Parser:
                         img_arr.append(img["src"])
         return img_arr
 
-    def download_image(self, source):
-        for img in source:
+    def download_image(self, images):
+        for img in images:
             link = self.session.get(img)
             self.open_write_file(link.content)
 
     def open_write_file(self, content):
-        with open(f'src/{self.rating.lower()}/{self.page}/img{self.num_img}.jpg', 'wb') as o:
+        with open(f'src/{self.rating.lower()}/img{self.num_img}.jpg', 'wb') as o:
             self.num_img += 1
             o.write(content)
 
@@ -70,16 +72,25 @@ class Parser:
         self.get_url_rating()
 
         while self.page <= self.to_pages:
-            os.makedirs(f"src/{self.rating}/{self.page}", exist_ok=True)
+            os.makedirs(f"src/{self.rating}", exist_ok=True)
             resource = self.get_page_list()
             images = self.get_image_page(resource)
             self.download_image(images)
+            logger.info("Image downloaded")
             self.page += 1
             self.get_url_rating()
 
 if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser("Wallhaven parser")
+    arg_parser.add_argument("rating", type=str, help="Возрастное ограничение: sfw или sketchy")
+    arg_parser.add_argument("pages", type=int, help="Количество страниц для обработки")
+    args = arg_parser.parse_args()
     logging.basicConfig(filename='wallhaven_parser.log', level=logging.INFO)
-    parser = Parser("sketchy", 15)
-    parser.parse_pages()
-
+    try:
+        if len(sys.argv) < 3:
+            raise Exception("Количество аргументов недостаточное для выполнения программы", sys.argv)
+        parser = Parser(args.rating, args.pages)
+        parser.parse_pages()
+    except Exception as ex:
+        print(ex)
 
