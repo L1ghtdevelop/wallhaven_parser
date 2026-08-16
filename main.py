@@ -2,12 +2,15 @@ import os
 import sys
 import argparse
 import time
-import random
+from dotenv import load_dotenv
 import logging
+import json
 import bs4
 import requests
 
 logger = logging.getLogger(__name__)
+
+load_dotenv()
 
 class Parser:
     def __init__(self, rating: str, pages: int) -> None:
@@ -43,7 +46,7 @@ class Parser:
             if image_link.has_attr("class") and image_link["class"][0] == "preview":
                 logger.info(image_link)
                 link = str(image_link["href"])
-                time.sleep(random.uniform(0.2, 0.8))
+                time.sleep(1)
                 image_response = self.session.get(link, headers=self.headers, timeout=30)
                 if image_response.status_code == 429:
                     wait = int(image_response.headers.get('Retry-After', 5))
@@ -80,17 +83,59 @@ class Parser:
             self.page += 1
             self.get_url_rating()
 
+class Parser_JSON:
+    def __init__(self, rating, to_page) -> None:
+        self.TOKEN = os.getenv("API_TOKEN")
+        self.headers = {
+                    'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
+        self.page = 1
+        self.num_img = 1
+        self.to_page = to_page
+        self.rating = rating.lower()
+        self.path = f"https://wallhaven.cc/api/v1/search?page={self.page}?apikey={self.TOKEN}"
+        self.session = requests.Session()
+        self.session.headers.update(self.headers)
+
+    def get_purity(self):
+        match self.rating:
+            case "sfw":
+                self.path = f"https://wallhaven.cc/api/v1/search?purity=100&categories=111?apikey={self.TOKEN}&page={self.page}"
+            case "sketchy":
+                self.path = f"https://wallhaven.cc/api/v1/search?purity=010&categories=111?apikey={self.TOKEN}&page={self.page}"
+            case "nsfw":
+                self.path = f"https://wallhaven.cc/api/v1/search?purity=001&categories=111&apikey={self.TOKEN}&page={self.page}"
+            case _:
+                self.path = f"https://wallhaven.cc/api/v1/search?page={self.page}?apikey={self.TOKEN}"
+
+
+    def download_images(self):
+        while self.page <= self.to_page:
+            self.get_purity()
+            logger.info(self.path)
+            response = self.session.get(self.path)
+            json_data = json.loads(response.content)
+            data = json_data["data"]
+            for image in data:
+                path = image["path"]
+                logger.info(image["purity"])
+                logger.info(image["url"])
+                logger.info(image["category"])
+                logger.info(f"Page: {self.page}")
+                image = self.session.get(path).content
+                with open(f'src/{self.rating.lower()}/img{self.num_img}.jpg', 'wb') as o:
+                    self.num_img += 1
+                    o.write(image)
+            self.page += 1
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser("Wallhaven parser")
     arg_parser.add_argument("rating", type=str, help="Возрастное ограничение: sfw или sketchy")
     arg_parser.add_argument("pages", type=int, help="Количество страниц для обработки")
     args = arg_parser.parse_args()
     logging.basicConfig(filename='wallhaven_parser.log', level=logging.INFO)
-    try:
-        if len(sys.argv) < 3:
-            raise Exception("Количество аргументов недостаточное для выполнения программы", sys.argv)
-        parser = Parser(args.rating, args.pages)
-        parser.parse_pages()
-    except Exception as ex:
-        print(ex)
+    if len(sys.argv) < 3:
+        raise Exception("Количество аргументов недостаточное для выполнения программы", sys.argv)
+    parser = Parser_JSON(args.rating, args.pages)
+    parser.download_images()
 
