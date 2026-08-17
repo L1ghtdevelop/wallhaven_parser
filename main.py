@@ -1,10 +1,9 @@
 import os
-import sys
-import argparse
-import time
 from dotenv import load_dotenv
 from aiogram import Bot
 from aiogram.types import InputMediaPhoto, FSInputFile
+from aiogram.client.session.aiohttp import AiohttpSession
+import aiogram.exceptions as ex
 import asyncio
 import logging
 import json
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 class Parser_JSON:
-    def __init__(self, rating, to_page) -> None:
+    def __init__(self, rating: str, to_page: int) -> None:
         self.TOKEN = os.getenv("API_TOKEN")
         self.headers = {
                     'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -82,20 +81,68 @@ class Parser_JSON:
             self.download_images(data)
             self.page += 1
 
-    async def main(self):
-        async with Bot(os.getenv("BOT_TOKEN")) as bot: # type: ignore
-            await bot.send_photo(os.getenv("GROUP_ID"), FSInputFile("src/sketchy/img11.jpg")) # type: ignore
+class Manager:
+    def __init__(self, type: str) -> None:
+        self.type = type.lower()
+
+    def do_parse(self):
+        try:
+            self.rating = input("Введите возрастное ограничение: sfw/sketchy/nsfw").lower()
+            self.pages = int(input("Введите количество страниц для парсинга: "))
+            parser = Parser_JSON(self.rating, self.pages)
+            parser.get_images()
+            print("Success")
+            logger.info(f"Success, parsed pages: {self.pages}")
+        except TypeError:
+            print("Вы ввели недопустимые значения")
+            logger.error(f"Значения недопустимы:\nrating={self.rating}\npages={self.pages}")
+
+    def send_images(self):
+            try:
+                self.num = int(input("Сколько картинок, хотите, отправить?\n"))
+                self.rating = input("Какие картинки вы хотите отправить? sfw/sketchy/nsfw\n").lower()
+                asyncio.run(main(self.num, self.rating))
+            except TypeError:
+                print("Вы ввели недопустимые значения")
+                logger.error(f"Значения недопустимы:\nnums={self.num}")
+    
+    def choose_type(self):
+        if self.type == "parse":
+            self.do_parse()
+
+        elif self.type == "send":
+            self.send_images()
+
+def get_path_image(num, rate):
+    path = f"src/{rate}/img{num}.jpg"
+    return path
+
+async def main(num, rate):
+    try:
+        session = AiohttpSession("socks5://gqVMrB:poFSJJ@45.147.180.18:8000")
+        async with Bot(os.getenv("BOT_TOKEN"), session=session) as bot: # type: ignore
+            for i in range(1, num+1):
+                try:
+                    path = get_path_image(i, rate)
+                    await bot.send_photo(os.getenv("GROUP_ID"), FSInputFile(path)) # type: ignore
+                except ex.TelegramBadRequest:
+                    logger.error(f"PHOTO_INVALID_DIMENSIONS\n{path}") # type: ignore
+                    print("Error")
+                    continue
+                except ex.TelegramNetworkError:
+                    logger.error(f"Can`t send image\n{path}")# type: ignore
+                    print("Error")
+                    continue
+
+    except ex.TelegramBadRequest:
+        logger.error(ex.TelegramBadRequest.url)
+        print("Error")
 
 
 if __name__ == "__main__":
-    arg_parser = argparse.ArgumentParser("Wallhaven parser")
-    arg_parser.add_argument("rating", type=str, help="Возрастное ограничение: sfw или sketchy")
-    arg_parser.add_argument("pages", type=int, help="Количество страниц для обработки")
-    args = arg_parser.parse_args()
     logging.basicConfig(filename='wallhaven_parser.log', level=logging.INFO)
-    if len(sys.argv) < 3:
-        raise Exception("Количество аргументов недостаточное для выполнения программы", sys.argv)
-    parser = Parser_JSON(args.rating, args.pages)
-    asyncio.run(parser.main())
+    manager = Manager(input("Что вы хотите сделать? Parse/Send\n"))
+    manager.choose_type()
+    
     
 
