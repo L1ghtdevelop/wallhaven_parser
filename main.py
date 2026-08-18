@@ -1,8 +1,11 @@
-import os
 from dotenv import load_dotenv
 from aiogram import Bot
 from aiogram.types import InputMediaPhoto, FSInputFile
 from aiogram.client.session.aiohttp import AiohttpSession
+from aiohttp import encode_basic_auth
+from time import sleep
+from PIL import Image
+import os
 import aiogram.exceptions as ex
 import asyncio
 import logging
@@ -14,6 +17,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 class Parser_JSON:
+
     def __init__(self, rating: str, to_page: int) -> None:
         self.TOKEN = os.getenv("API_TOKEN")
         self.headers = {
@@ -58,18 +62,53 @@ class Parser_JSON:
             case _:
                 self.path = f"https://wallhaven.cc/api/v1/search?page={self.page}?apikey={self.TOKEN}"
 
+    def log_image(self, image):
+        logger.info(image["purity"])
+        logger.info(image["url"])
+        logger.info(image["category"])
+        logger.info(f"Page: {self.page}")
+
+    def validate_image(self, path) -> bool:
+        try:
+            with Image.open(path) as img:
+                w, h = img.size
+
+                if w < 32 or h < 32:
+                    logger.warning(f"Изображение слишком маленькое: {w}x{h}")
+                    os.remove(path)
+                    return False
+                
+                elif w > 10000 or h > 10000:
+                    logger.warning(f"Изображение слишком большое: {w}x{h}")
+                    img.thumbnail((2560, 2560))
+                    img.save(path, quality=85)
+                    return True
+                
+                elif img.mode == "RGBA":
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[3])
+                    img = background
+                    img.save(path)
+                    return True
+                
+        except Exception as ex:
+            logger.warning(f"Невалидное изображение: {ex}")
+            os.remove(path)
+            return False
+        
+        return True
+
     def download_images(self, data):
         for image in data:
+            save_path = f'src/{self.rating.lower()}/img{self.num_img}.jpg'
             if self.add_to_database(image["id"], image["url"]):
                 path = image["path"]
-                logger.info(image["purity"])
-                logger.info(image["url"])
-                logger.info(image["category"])
-                logger.info(f"Page: {self.page}")
+                self.log_image(image)
                 image = self.session.get(path).content
-                with open(f'src/{self.rating.lower()}/img{self.num_img}.jpg', 'wb') as o:
+                with open(save_path, 'wb') as o:
                     self.num_img += 1
                     o.write(image)
+            self.validate_image(save_path)
 
     def get_images(self):
         while self.page <= self.to_page:
@@ -117,14 +156,34 @@ def get_path_image(num, rate):
     path = f"src/{rate}/img{num}.jpg"
     return path
 
-async def main(num, rate):
+def set_arr_images(rate, start, stop):
+    arr = []
+    for j in range(start, stop):
+        logger.info(f"{start}, {stop}")
+        path = get_path_image(j, rate)
+        logger.info(path)
+        arr.append(InputMediaPhoto(media=FSInputFile(path)))
+    return arr
+
+async def main(num, rate):# type: ignore
     try:
-        session = AiohttpSession("socks5://gqVMrB:poFSJJ@45.147.180.18:8000")
+        logger.info("Enter to main")
+        session = AiohttpSession(os.getenv("PROXY")) # type: ignore
+        logger.info("Connected to session")
         async with Bot(os.getenv("BOT_TOKEN"), session=session) as bot: # type: ignore
-            for i in range(1, num+1):
+            logger.info("Enter to Bot manager")
+            max_num = (num // 5) + 2
+            start = 1
+            stop = 6
+            for i in range(1, max_num):
+                path = get_path_image(num, rate)
                 try:
-                    path = get_path_image(i, rate)
-                    await bot.send_photo(os.getenv("GROUP_ID"), FSInputFile(path)) # type: ignore
+                    sleep(1)
+                    arr = set_arr_images(rate, start, stop)
+                    await bot.send_media_group(os.getenv("GROUP_ID"), arr) # type: ignore
+                    start = stop
+                    stop += 5
+                    logger.info(f"Images group #{i} sended")
                 except ex.TelegramBadRequest:
                     logger.error(f"PHOTO_INVALID_DIMENSIONS\n{path}") # type: ignore
                     print("Error")
