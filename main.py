@@ -27,7 +27,7 @@ class Parser_JSON:
         self.num_img = 1
         self.to_page = to_page
         self.rating = rating.lower()
-        self.path_db = "database.json"
+        self.path_db = "data/database.json"
         self.path = f"https://wallhaven.cc/api/v1/search?page={self.page}?apikey={self.TOKEN}"
         self.session = requests.Session()
         self.session.headers.update(self.headers)
