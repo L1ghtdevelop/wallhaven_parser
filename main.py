@@ -172,7 +172,7 @@ async def main(num, rate):# type: ignore
         logger.info("Connected to session")
         async with Bot(os.getenv("BOT_TOKEN"), session=session) as bot: # type: ignore
             logger.info("Enter to Bot manager")
-            max_num = (num // 5) + 2
+            max_num = (num // 5) + 1
             start = 1
             stop = 6
             for i in range(1, max_num):
@@ -184,12 +184,12 @@ async def main(num, rate):# type: ignore
                     start = stop
                     stop += 5
                     logger.info(f"Images group #{i} sended")
-                except ex.TelegramBadRequest:
-                    logger.error(f"PHOTO_INVALID_DIMENSIONS\n{path}") # type: ignore
+                except ex.TelegramBadRequest as e:
+                    logger.error(f"PHOTO_INVALID_DIMENSIONS\n{path}\n{e}") # type: ignore
                     print("Error")
                     continue
-                except ex.TelegramNetworkError:
-                    logger.error(f"Can`t send image\n{path}")# type: ignore
+                except ex.TelegramNetworkError as e:
+                    logger.error(f"Can`t send image\n{path}\n{e}")# type: ignore
                     print("Error")
                     continue
 
