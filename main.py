@@ -185,11 +185,11 @@ async def main(num, rate):# type: ignore
                     stop += 5
                     logger.info(f"Images group #{i} sended")
                 except ex.TelegramBadRequest as e:
-                    logger.error(f"PHOTO_INVALID_DIMENSIONS\n{path}\n{e}") # type: ignore
+                    logger.error(f"{e}\n{path}\n") # type: ignore
                     print("Error")
                     continue
                 except ex.TelegramNetworkError as e:
-                    logger.error(f"Can`t send image\n{path}\n{e}")# type: ignore
+                    logger.error(f"{e}\n{path}")# type: ignore
                     print("Error")
                     continue
 
