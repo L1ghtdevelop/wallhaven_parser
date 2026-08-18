@@ -106,9 +106,9 @@ class Parser_JSON:
                 self.log_image(image)
                 image = self.session.get(path).content
                 with open(save_path, 'wb') as o:
-                    self.num_img += 1
                     o.write(image)
             self.validate_image(save_path)
+            self.num_img += 1
 
     def get_images(self):
         while self.page <= self.to_page:
@@ -126,7 +126,7 @@ class Manager:
 
     def do_parse(self):
         try:
-            self.rating = input("Введите возрастное ограничение: sfw/sketchy/nsfw").lower()
+            self.rating = input("Введите возрастное ограничение: sfw/sketchy/nsfw\n").lower()
             self.pages = int(input("Введите количество страниц для парсинга: "))
             parser = Parser_JSON(self.rating, self.pages)
             parser.get_images()
@@ -197,9 +197,20 @@ async def main(num, rate):# type: ignore
         logger.error(ex.TelegramBadRequest.url)
         print("Error")
 
+def overwrite_logs(path):
+    try:
+        with open(log_path, "w") as f:
+            f.write("")
+    except FileExistsError as e:
+        logger.error(e)
+
+    except FileNotFoundError as e:
+        logger.error(e)
 
 if __name__ == "__main__":
-    logging.basicConfig(filename='wallhaven_parser.log', level=logging.INFO)
+    log_path = "wallhaven_parser.log"
+    overwrite_logs(log_path)
+    logging.basicConfig(filename=log_path, level=logging.INFO)
     manager = Manager(input("Что вы хотите сделать? Parse/Send\n"))
     manager.choose_type()
     

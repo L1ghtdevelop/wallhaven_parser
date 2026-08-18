@@ -3,9 +3,11 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+
+database.json
+
 # C extensions
 *.so
-.json
 # Distribution / packaging
 .Python
 src/
