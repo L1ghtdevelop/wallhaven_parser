@@ -178,17 +178,17 @@ async def main(num, rate):# type: ignore
         logger.info("Connected to session")
         async with Bot(os.getenv("BOT_TOKEN"), session=session) as bot: # type: ignore
             logger.info("Enter to Bot manager")
-            max_num = (num // 5) + 1
             start = 1
-            stop = 6
+            step = 2
+            max_num = (num // step) + 1
             for i in range(1, max_num):
                 path = get_path_image(num, rate)
                 try:
                     sleep(1)
-                    arr = set_arr_images(rate, start, stop)
+                    arr = set_arr_images(rate, start, max_num)
                     await bot.send_media_group(os.getenv("GROUP_ID"), arr) # type: ignore
-                    start = stop
-                    stop += 5
+                    start = max_num
+                    max_num += step
                     logger.info(f"Images group #{i} sended")
                 except ex.TelegramBadRequest as e:
                     logger.error(f"{e}\n{path}\n") # type: ignore
