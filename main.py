@@ -32,6 +32,12 @@ class Parser_JSON:
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
+    def create_dirs(self):
+        os.makedirs("src/sfw", exist_ok=True)
+        os.makedirs("src/sketchy", exist_ok=True)
+        os.makedirs("src/nsfw", exist_ok=True)
+        os.makedirs("data", exist_ok=True)
+
     def add_to_database(self, id, url):
         try:
             with open(self.path_db, "r") as f:
@@ -107,7 +113,6 @@ class Parser_JSON:
                 image = self.session.get(path).content
                 with open(save_path, 'wb') as o:
                     o.write(image)
-            self.validate_image(save_path)
             self.num_img += 1
 
     def get_images(self):
@@ -129,6 +134,7 @@ class Manager:
             self.rating = input("Введите возрастное ограничение: sfw/sketchy/nsfw\n").lower()
             self.pages = int(input("Введите количество страниц для парсинга: "))
             parser = Parser_JSON(self.rating, self.pages)
+            parser.create_dirs()
             parser.get_images()
             print("Success")
             logger.info(f"Success, parsed pages: {self.pages}")
