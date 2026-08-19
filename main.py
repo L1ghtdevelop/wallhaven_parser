@@ -104,6 +104,14 @@ class Parser_JSON:
         
         return True
 
+    def compress_image(self, input_path, target_quality=75):
+        with Image.open(input_path) as img:
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            logger.info(img.size)
+            img.save(input_path, "JPEG",optimize=True, quality=target_quality)
+
+
     def download_images(self, data):
         for image in data:
             save_path = f'src/{self.rating.lower()}/img{self.num_img}.jpg'
@@ -113,7 +121,8 @@ class Parser_JSON:
                 image = self.session.get(path).content
                 with open(save_path, 'wb') as o:
                     o.write(image)
-            self.num_img += 1
+                self.compress_image(save_path, 80)
+                self.num_img += 1
 
     def get_images(self):
         while self.page <= self.to_page:
@@ -186,6 +195,7 @@ async def main(num, rate):# type: ignore
                 try:
                     sleep(1)
                     arr = set_arr_images(rate, start, step)
+                    logger.info(len(arr))
                     await bot.send_media_group(os.getenv("GROUP_ID"), arr) # type: ignore
                     start += step
                     logger.info(f"Images group #{i} sended")
