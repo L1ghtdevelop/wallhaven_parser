@@ -162,10 +162,10 @@ def get_path_image(num, rate):
     path = f"src/{rate}/img{num}.jpg"
     return path
 
-def set_arr_images(rate, start, stop):
+def set_arr_images(rate, start, step):
     arr = []
-    for j in range(start, stop):
-        logger.info(f"{start}, {stop}")
+    for j in range(start, start + step):
+        logger.info(f"{start}, {start + step}")
         path = get_path_image(j, rate)
         logger.info(path)
         arr.append(InputMediaPhoto(media=FSInputFile(path)))
@@ -185,10 +185,9 @@ async def main(num, rate):# type: ignore
                 path = get_path_image(num, rate)
                 try:
                     sleep(1)
-                    arr = set_arr_images(rate, start, max_num)
+                    arr = set_arr_images(rate, start, step)
                     await bot.send_media_group(os.getenv("GROUP_ID"), arr) # type: ignore
-                    start = max_num
-                    max_num += step
+                    start += step
                     logger.info(f"Images group #{i} sended")
                 except ex.TelegramBadRequest as e:
                     logger.error(f"{e}\n{path}\n") # type: ignore
