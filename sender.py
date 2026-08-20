@@ -1,6 +1,8 @@
 import aiogram.exceptions as ex
 import os
 
+from database import Database
+
 from aiogram import Bot
 from time import sleep
 from aiogram.types import InputMediaPhoto, FSInputFile
@@ -11,6 +13,7 @@ class Sender:
     def __init__(self, logger) -> None:
         self.logger = logger
         self.rating = {"nsfw": 239, "sketchy": 243, "sfw": 241}
+        self.db = Database("database/database.db", logger)
         
     def get_path_image(self, num, rate):
         path = f"src/{rate}/img{num}.jpg"
@@ -23,6 +26,7 @@ class Sender:
             path = self.get_path_image(j, rate)
             self.logger.info(path)
             arr.append(InputMediaPhoto(media=FSInputFile(path)))
+            self.db.mark_sended(path)
         return arr
 
     async def main(self, num, rate):# type: ignore
@@ -49,7 +53,7 @@ class Sender:
                         print("Error")
                         continue
                     except ex.TelegramNetworkError as e:
-                        logger.error(f"{e}\n{path}")# type: ignore
+                        self.logger.error(f"{e}\n{path}")# type: ignore
                         print("Error")
                         continue
 

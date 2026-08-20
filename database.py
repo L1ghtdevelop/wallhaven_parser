@@ -1,6 +1,5 @@
 import sqlite3
 
-
 class Database:
 
     def __init__(self, path, logger) -> None:
@@ -10,7 +9,7 @@ class Database:
     def create_table(self):
         with sqlite3.connect(self.path) as con:
             cur = con.cursor()
-            cur.execute("CREATE TABLE IF NOT EXISTS images(num, id, url, is_sended, path)")
+            cur.execute("CREATE TABLE IF NOT EXISTS images(num, id PRIMARY KEY, path, is_sended, purity)")
             cur.close()
 
     def add_to_database(self, num, id, url, rate):
@@ -24,10 +23,9 @@ class Database:
                 ids = db.execute("SELECT id FROM images")
                 for db_id in ids.fetchall():
                     self.logger.info(db_id[0])
-                    self.logger.info(id)
                     if db_id[0] == id:
                         self.logger.info("Такой элемент существует")
-                        self.logger.info(db_id)
+                        self.logger.info(db_id[0])
                         return True
                 else:
                     return False
@@ -39,4 +37,13 @@ class Database:
             for num in nums:
                 return num[0]
             return 1
+
+    def mark_sended(self, path):
+        with sqlite3.connect(self.path) as con:
+            cur = con.cursor()
+            paths = cur.execute("SELECT path FROM images")
+            for db_path in paths.fetchall():
+                if db_path[0] == path:
+                    cur.execute("UPDATE images SET is_sended = ? WHERE path = ?", (1, path))
+
 
