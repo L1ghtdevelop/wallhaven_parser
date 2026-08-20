@@ -1,23 +1,33 @@
 import json
 import os
-import logging
 import requests
+
+from database import Database
 from PIL import Image
 
 class Parser:
 
     def __init__(self, rating: str, to_page: int, logger) -> None:
         self.TOKEN = os.getenv("API_TOKEN")
+
         self.headers = {
                     'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                 }
+        
         self.logger = logger
+
         self.page = 1
-        self.num_img = 1
         self.to_page = to_page
+
         self.rating = rating.lower()
-        self.path_db = "data/database.json"
+
+        self.path_db = "database/database.json"
         self.path = f"https://wallhaven.cc/api/v1/search?page={self.page}?apikey={self.TOKEN}"
+
+        self.db = Database("database/database.db", logger)
+
+        self.num_img: int = 1
+
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
@@ -25,23 +35,7 @@ class Parser:
         os.makedirs("src/sfw", exist_ok=True)
         os.makedirs("src/sketchy", exist_ok=True)
         os.makedirs("src/nsfw", exist_ok=True)
-        os.makedirs("data", exist_ok=True)
-
-    def add_to_database(self, id, url):
-        try:
-            with open(self.path_db, "r") as f:
-                data = json.load(f)
-        except (FileExistsError, json.JSONDecodeError):
-            data = {}
-
-        if id in data:
-            self.logger.warning("Такой элемент уже существует")
-            return False
-
-        data[id] = url
-        with open(self.path_db, "w") as f:
-            json.dump(data, f, indent=4)
-            return True
+        os.makedirs("database", exist_ok=True)
 
     def get_purity(self):
         match self.rating:
@@ -63,54 +57,29 @@ class Parser:
         self.logger.info(image["category"])
         self.logger.info(f"Page: {self.page}")
 
-    def validate_image(self, path) -> bool:
-        try:
-            with Image.open(path) as img:
-                w, h = img.size
-
-                if w < 32 or h < 32:
-                    self.logger.warning(f"Изображение слишком маленькое: {w}x{h}")
-                    os.remove(path)
-                    return False
-                
-                elif w > 10000 or h > 10000:
-                    self.logger.warning(f"Изображение слишком большое: {w}x{h}")
-                    img.thumbnail((2560, 2560))
-                    img.save(path, quality=85)
-                    return True
-                
-                elif img.mode == "RGBA":
-                    background = Image.new("RGB", img.size, (255, 255, 255))
-                    background.paste(img, mask=img.split()[3])
-                    img = background
-                    img.save(path)
-                    return True
-                
-        except Exception as ex:
-            self.logger.warning(f"Невалидное изображение: {ex}")
-            os.remove(path)
-            return False
-        
-        return True
-
     def compress_image(self, input_path, target_quality=75):
-        with Image.open(input_path) as img:
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-            self.logger.info(img.size)
-            img.save(input_path, "JPEG",optimize=True, quality=target_quality)
-
+        try:
+            with Image.open(input_path) as img:
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
+                self.logger.info(img.size)
+                img.save(input_path, "JPEG",optimize=True, quality=target_quality)
+        except Image.DecompressionBombWarning:
+            self.logger.info(input_path)
 
     def download_images(self, data):
+        self.num_img = self.db.get_last_id() + 1
         for image in data:
             save_path = f'src/{self.rating.lower()}/img{self.num_img}.jpg'
-            if self.add_to_database(image["id"], image["url"]):
+            if not self.db.has_item(image["id"]):
                 path = image["path"]
+                image_id = image["id"]
                 self.log_image(image)
                 image = self.session.get(path).content
                 with open(save_path, 'wb') as o:
                     o.write(image)
                 self.compress_image(save_path, 80)
+                self.db.add_to_database(self.num_img, image_id, save_path, self.rating)
                 self.num_img += 1
 
     def get_images(self):
