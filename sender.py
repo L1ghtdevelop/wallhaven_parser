@@ -26,15 +26,13 @@ class Sender:
             path = self.get_path_image(j, rate)
             self.logger.info(path)
             arr.append(InputMediaPhoto(media=FSInputFile(path)))
-            self.db.mark_sended(path)
         return arr
 
     async def main(self, num, rate):# type: ignore
         try:
             self.logger.info("Enter to main")
-            session = AiohttpSession() # type: ignore
             self.logger.info("Connected to session")
-            async with Bot(os.getenv("BOT_TOKEN"), session=session) as bot: # type: ignore
+            async with Bot(os.getenv("BOT_TOKEN")) as bot: # type: ignore
                 self.logger.info("Enter to Bot manager")
                 start = 1
                 step = 2
@@ -45,7 +43,8 @@ class Sender:
                         sleep(1)
                         arr = self.set_arr_images(rate, start, step)
                         self.logger.info(len(arr))
-                        await bot.send_media_group(os.getenv("GROUP_ID"), arr, message_thread_id=self.rating[rate]) # type: ignore
+                        self.logger.info(arr)
+                        await bot.send_media_group(os.getenv("GROUP_ID"), media=arr, message_thread_id=self.rating[rate]) # type: ignore
                         start += step
                         self.logger.info(f"Images group #{i} sended")
                     except ex.TelegramBadRequest as e:
@@ -53,7 +52,7 @@ class Sender:
                         print("Error")
                         continue
                     except ex.TelegramNetworkError as e:
-                        self.logger.error(f"{e}\n{path}")# type: ignore
+                        self.logger.error(f"{e}")# type: ignore
                         print("Error")
                         continue
 
