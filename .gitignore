@@ -10,7 +10,7 @@ database.json
 *.so
 # Distribution / packaging
 .Python
-data/
+database/
 src/
 build/
 develop-eggs/
