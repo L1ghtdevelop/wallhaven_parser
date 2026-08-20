@@ -30,7 +30,8 @@ if __name__ == "__main__":
     manager = Manager(input("Что вы хотите сделать? Parse/Send\n"), logger)
     sender = Sender(logger)
     data = manager.choose_type()
-    asyncio.run(sender.main(data[0], data[1]))
+    if data:
+        asyncio.run(sender.main(data[0], data[1]))
 
     
     

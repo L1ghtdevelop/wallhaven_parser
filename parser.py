@@ -68,7 +68,7 @@ class Parser:
             self.logger.info(input_path)
 
     def download_images(self, data):
-        self.num_img = self.db.get_last_id() + 1
+        self.num_img = self.db.get_last_id() + 1 if self.db.get_last_id() > 1 else 1
         for image in data:
             save_path = f'src/{self.rating.lower()}/img{self.num_img}.jpg'
             if not self.db.has_item(image["id"]):

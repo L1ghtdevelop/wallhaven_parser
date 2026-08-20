@@ -22,13 +22,21 @@ class Database:
             with sqlite3.connect(self.path) as db:
                 ids = db.execute("SELECT id FROM images")
                 for db_id in ids.fetchall():
-                    self.logger.info(db_id[0])
                     if db_id[0] == id:
                         self.logger.info("Такой элемент существует")
                         self.logger.info(db_id[0])
                         return True
                 else:
                     return False
+
+    def is_sended(self, img_path):
+        with sqlite3.connect(self.path) as db:
+            for db_photo in db.execute("SELECT path, is_sended FROM images"):
+                if db_photo[0] == img_path:
+                    if db_photo[1] == 1:
+                        return True
+                    else:
+                        return False
 
     def get_last_id(self) -> int:
         with sqlite3.connect(self.path) as con:

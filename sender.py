@@ -4,15 +4,18 @@ import os
 from database import Database
 
 from aiogram import Bot
+from dotenv import load_dotenv
 from time import sleep
 from aiogram.types import InputMediaPhoto, FSInputFile
-from aiogram.client.session.aiohttp import AiohttpSession
-
+load_dotenv()
 
 class Sender:
     def __init__(self, logger) -> None:
         self.logger = logger
         self.rating = {"nsfw": 239, "sketchy": 243, "sfw": 241}
+
+        self.group_id: int = os.getenv("GROUP_ID") # type: ignore
+        self.bot_token: str = os.getenv("BOT_TOKEN") # type: ignore
         self.db = Database("database/database.db", logger)
         
     def get_path_image(self, num, rate):
@@ -24,36 +27,36 @@ class Sender:
         for j in range(start, start + step):
             self.logger.info(f"{start}, {start + step}")
             path = self.get_path_image(j, rate)
-            self.logger.info(path)
-            arr.append(InputMediaPhoto(media=FSInputFile(path)))
+            self.logger.info(not self.db.is_sended(path))
+            if not self.db.is_sended(path):
+                file = FSInputFile(path)
+                arr.append(InputMediaPhoto(media=file))
+                self.db.mark_sended(path)
         return arr
 
-    async def main(self, num, rate):# type: ignore
+    async def main(self, num, rate):
         try:
             self.logger.info("Enter to main")
             self.logger.info("Connected to session")
-            async with Bot(os.getenv("BOT_TOKEN")) as bot: # type: ignore
+            async with Bot(self.bot_token) as bot: 
                 self.logger.info("Enter to Bot manager")
                 start = 1
                 step = 2
                 max_num = (num // step) + 1
                 for i in range(1, max_num):
-                    path = self.get_path_image(num, rate)
                     try:
                         sleep(1)
                         arr = self.set_arr_images(rate, start, step)
-                        self.logger.info(len(arr))
-                        self.logger.info(arr)
-                        await bot.send_media_group(os.getenv("GROUP_ID"), media=arr, message_thread_id=self.rating[rate]) # type: ignore
+                        await bot.send_media_group(self.group_id, media=arr, message_thread_id=self.rating[rate])
                         start += step
                         self.logger.info(f"Images group #{i} sended")
                     except ex.TelegramBadRequest as e:
-                        self.logger.error(f"{e}\n{path}\n") # type: ignore
-                        print("Error")
-                        continue
+                        self.logger.error(f"{e}")
+                        print("Bad Request")
+                        start += step
                     except ex.TelegramNetworkError as e:
-                        self.logger.error(f"{e}")# type: ignore
-                        print("Error")
+                        self.logger.error(f"{e}")
+                        print("Network Error")
                         continue
 
         except ex.TelegramBadRequest:
