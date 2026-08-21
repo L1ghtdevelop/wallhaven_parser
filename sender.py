@@ -29,9 +29,12 @@ class Sender:
             path = self.get_path_image(j, rate)
             self.logger.info(not self.db.is_sended(path))
             if not self.db.is_sended(path):
-                file = FSInputFile(path)
-                arr.append(InputMediaPhoto(media=file))
+                photo = FSInputFile(path)
+                arr.append(InputMediaPhoto(media=photo))
                 self.db.mark_sended(path)
+            else:
+                self.logger.info("Это изображение отправлено")
+                continue
         return arr
 
     async def main(self, num, rate):
