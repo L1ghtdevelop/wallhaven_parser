@@ -1,3 +1,5 @@
+scheduler==0.8.11 
+typeguard==4.6.0
 aiofiles==25.1.0
 aiogram==3.30.0
 aiohappyeyeballs==2.7.1
@@ -17,8 +19,6 @@ magic-filter==1.0.12
 multidict==6.7.1
 pillow==12.3.0
 pip==24.0
-apscheduler==3.11.3
-tzlocal==5.4.4
 aiosqlite==0.22.1
 propcache==0.5.2
 pydantic==2.13.4

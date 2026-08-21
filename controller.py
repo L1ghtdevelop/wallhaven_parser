@@ -1,7 +1,6 @@
-
 from parser import Parser
 
-class Manager:
+class Controller:
     def __init__(self, type: str, logger) -> None:
         self.type = type.lower()
         self.logger = logger
@@ -26,7 +25,7 @@ class Manager:
 
             elif self.type == "send":
                 try:
-                    self.num = int(input("Сколько картинок, хотите, отправить?\n"))
+                    self.num = 20
                     return [self.num, self.rating]
                 except TypeError:
                     print("Вы ввели недопустимые значения")

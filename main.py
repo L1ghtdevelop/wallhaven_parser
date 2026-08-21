@@ -1,7 +1,11 @@
 from dotenv import load_dotenv
-from manager import Manager
+from controller import Controller
 from sender import Sender
 from database import Database
+
+import datetime as dt
+from scheduler import Scheduler
+from time import sleep
 
 import asyncio
 import logging
@@ -21,17 +25,26 @@ def overwrite_logs(path):
     except FileNotFoundError as e:
         logger.error(e)
 
+def job():
+    asyncio.run(sender.main(data[0], data[1]))
+
 if __name__ == "__main__":
     log_path = "wallhaven_parser.log"
     overwrite_logs(log_path)
     logging.basicConfig(filename=log_path, level=logging.INFO)
     db = Database("database/database.db", logger)
     db.create_table()
-    manager = Manager(input("Что вы хотите сделать? Parse/Send\n"), logger)
+    manager = Controller(input("Что вы хотите сделать? Parse/Send\n"), logger)
     sender = Sender(logger)
+    scheduler = Scheduler()
     data = manager.choose_type()
     if data:
-        asyncio.run(sender.main(data[0], data[1]))
+        scheduler.daily(dt.time(hour=10), job)
+        scheduler.daily(dt.time(hour=22), job)
+        logger.info(scheduler)
+    while True:
+        scheduler.exec_jobs()
+        sleep(1)
 
     
     
