@@ -25,23 +25,20 @@ def overwrite_logs(path):
     except FileNotFoundError as e:
         logger.error(e)
 
-def job():
-    asyncio.run(sender.main(data[0], data[1]))
-
 if __name__ == "__main__":
     log_path = "wallhaven_parser.log"
     overwrite_logs(log_path)
     logging.basicConfig(filename=log_path, level=logging.INFO)
     db = Database("database/database.db", logger)
     db.create_table()
-    manager = Controller(input("Что вы хотите сделать? Parse/Send\n"), logger)
-    sender = Sender(logger)
     scheduler = Scheduler()
-    data = manager.choose_type()
-    if data:
-        scheduler.daily(dt.time(hour=10), job)
-        scheduler.daily(dt.time(hour=22), job)
-        logger.info(scheduler)
+    rating = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
+    controller = Controller(logger)
+    scheduler.daily(dt.time(hour=9), controller.choose_type, kwargs={"type": "parse", "rating": rating})
+    scheduler.daily(dt.time(hour=10), controller.choose_type, kwargs={"type": "send", "rating": rating})
+    scheduler.daily(dt.time(hour=20), controller.choose_type, kwargs={"type": "parse", "rating": rating})
+    scheduler.daily(dt.time(hour=21), controller.choose_type, kwargs={"type": "send", "rating": rating})
+    logger.info(scheduler)
     while True:
         scheduler.exec_jobs()
         sleep(1)

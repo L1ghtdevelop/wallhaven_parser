@@ -1,39 +1,43 @@
 from parser import Parser
+from sender import Sender
+
+import asyncio
 
 class Controller:
-    def __init__(self, type: str, logger) -> None:
-        self.type = type.lower()
+    def __init__(self, logger) -> None:
         self.logger = logger
 
-    def choose_type(self) -> list[int | str]:
+    def parse(self, rating):
         try:
-            self.rating = input("Введите возрастное ограничение: sfw/sketchy/nsfw\n").lower()  
+            self.pages = 1
+            parser = Parser(rating, self.pages, self.logger)
+            parser.create_dirs()
+            parser.get_images()
+            print("Success")
+            self.logger.info(f"Success, parsed pages: {self.pages}")
+        except TypeError:
+            print("Вы ввели недопустимые значения")
+            self.logger.error(f"Значения недопустимы:\nrating={rating}\npages={self.pages}")
 
-            if self.type == "parse":
-                try:
-                    self.pages = int(input("Введите количество страниц для парсинга: "))
-                    parser = Parser(self.rating, self.pages, self.logger)
-                    parser.create_dirs()
-                    parser.get_images()
-                    print("Success")
-                    self.logger.info(f"Success, parsed pages: {self.pages}")
-                    return []
-                except TypeError:
-                    print("Вы ввели недопустимые значения")
-                    self.logger.error(f"Значения недопустимы:\nrating={self.rating}\npages={self.pages}")
-                    return []
+    def send(self, rating):
+        try:
+            self.num = 20
+            sender = Sender(self.logger)
+            asyncio.run(sender.main(self.num, rating))
+        except TypeError:
+            print("Вы ввели недопустимые значения")
+            self.logger.error(f"Значения недопустимы:\nnums={self.num}")
 
-            elif self.type == "send":
-                try:
-                    self.num = 20
-                    return [self.num, self.rating]
-                except TypeError:
-                    print("Вы ввели недопустимые значения")
-                    self.logger.error(f"Значения недопустимы:\nnums={self.num}")
-                    return [0, "sfw"]
+    def choose_type(self, type, rating):
+        try:
+            if type == "parse":
+                self.parse(rating)
+
+            elif type == "send":
+                self.send(rating)
             else:
                 raise TypeError
         except TypeError:
             print("Вы ввели недопустимые значения")
-            self.logger.error(f"Значения недопустимы: {self.rating}")
+            self.logger.error(f"Значения недопустимы: {rating}")
             return []
