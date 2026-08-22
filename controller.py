@@ -1,5 +1,6 @@
 from parser import Parser
 from sender import Sender
+from manager import Manager
 
 import asyncio
 
@@ -33,6 +34,11 @@ class Controller:
             if type == "myself":
                 job = input("Что вы хотите сделать? parse/send").lower()
                 self.choose_job(job, rating)
+            elif type == "shedule":
+                manager = Manager(rating)
+                manager.shedule(self)
+                manager.start_job()
+
         except TypeError:
             print("Вы ввели недопустимые значения")
             self.logger.error(f"Значения недопустимы: {rating}")
