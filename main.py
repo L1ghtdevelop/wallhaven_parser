@@ -1,13 +1,11 @@
 from dotenv import load_dotenv
 from controller import Controller
-from sender import Sender
 from database import Database
 
 import datetime as dt
 from scheduler import Scheduler
 from time import sleep
 
-import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
