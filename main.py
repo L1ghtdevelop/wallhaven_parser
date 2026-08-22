@@ -2,10 +2,6 @@ from dotenv import load_dotenv
 from controller import Controller
 from database import Database
 
-import datetime as dt
-from scheduler import Scheduler
-from time import sleep
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,17 +25,8 @@ if __name__ == "__main__":
     logging.basicConfig(filename=log_path, level=logging.INFO)
     db = Database("database/database.db", logger)
     db.create_table()
-    scheduler = Scheduler()
     rating = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
     controller = Controller(logger)
-    scheduler.daily(dt.time(hour=9), controller.choose_type, kwargs={"type": "parse", "rating": rating})
-    scheduler.daily(dt.time(hour=10), controller.choose_type, kwargs={"type": "send", "rating": rating})
-    scheduler.daily(dt.time(hour=20), controller.choose_type, kwargs={"type": "parse", "rating": rating})
-    scheduler.daily(dt.time(hour=21), controller.choose_type, kwargs={"type": "send", "rating": rating})
-    logger.info(scheduler)
-    while True:
-        scheduler.exec_jobs()
-        sleep(1)
 
     
     

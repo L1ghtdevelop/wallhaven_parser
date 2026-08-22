@@ -30,14 +30,22 @@ class Controller:
 
     def choose_type(self, type, rating):
         try:
-            if type == "parse":
+            if type == "myself":
+                job = input("Что вы хотите сделать? parse/send").lower()
+                self.choose_job(job, rating)
+        except TypeError:
+            print("Вы ввели недопустимые значения")
+            self.logger.error(f"Значения недопустимы: {rating}")
+
+    def choose_job(self, job, rating):
+        try:
+            if job == "parse":
                 self.parse(rating)
 
-            elif type == "send":
+            elif job == "send":
                 self.send(rating)
             else:
                 raise TypeError
         except TypeError:
             print("Вы ввели недопустимые значения")
             self.logger.error(f"Значения недопустимы: {rating}")
-            return []
