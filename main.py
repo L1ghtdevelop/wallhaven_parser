@@ -27,6 +27,8 @@ if __name__ == "__main__":
     db.create_table()
     rating = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
     controller = Controller(logger)
+    type = input("Вы хотите самому выполнить или отдать в расписание? myself/shedule")
+    controller.choose_type(type, rating)
 
     
     
