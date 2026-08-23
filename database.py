@@ -38,12 +38,13 @@ class Database:
                     else:
                         return False
 
-    def get_last_id(self) -> int:
+    def get_last_id(self, purity) -> int:
         with sqlite3.connect(self.path) as con:
             cur = con.cursor()
-            nums = cur.execute("SELECT num FROM images ORDER BY num DESC")
+            nums = cur.execute("SELECT num, purity FROM images ORDER BY num DESC")
             for num in nums:
-                return num[0]
+                if num[1] == purity:
+                    return num[0]
             return 1
 
     def mark_sended(self, path):
