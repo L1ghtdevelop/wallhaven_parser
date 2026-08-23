@@ -26,8 +26,21 @@ if __name__ == "__main__":
     db = Database("database/database.db", logger)
     db.create_table()
     rating = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
+    try:
+        if rating == "sfw":
+            pass
+        elif rating == "sketchy":
+            pass
+        elif rating == "nsfw":
+            pass
+        else:
+            raise TypeError
+    except TypeError:
+        print("Вы ввели недопустимое значение")
+        rating = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
+        logger.error("Вы ввели недопустимое значение")
     controller = Controller(logger)
-    type = input("Вы хотите самому выполнить или отдать в расписание? myself/shedule")
+    type = input("Вы хотите самому выполнить или отдать в расписание? myself/shedule\n")
     controller.choose_type(type, rating)
 
     

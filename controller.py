@@ -32,12 +32,14 @@ class Controller:
     def choose_type(self, type, rating):
         try:
             if type == "myself":
-                job = input("Что вы хотите сделать? parse/send").lower()
+                job = input("Что вы хотите сделать? parse/send\n").lower()
                 self.choose_job(job, rating)
             elif type == "shedule":
                 manager = Manager(rating)
                 manager.shedule(self)
                 manager.start_job()
+            else:
+                raise TypeError
 
         except TypeError:
             print("Вы ввели недопустимые значения")
