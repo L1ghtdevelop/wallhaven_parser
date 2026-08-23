@@ -4,13 +4,13 @@ __pycache__/
 *$py.class
 
 
-database.json
 
 # C extensions
 *.so
 *.db
 # Distribution / packaging
 .Python
+database.json
 database/
 src/
 build/
