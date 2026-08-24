@@ -7,11 +7,8 @@ __pycache__/
 
 # C extensions
 *.so
-*.db
 # Distribution / packaging
 .Python
-database.json
-database/
 src/
 build/
 develop-eggs/
