@@ -22,8 +22,9 @@ class Database:
 
     def has_item(self, id: str) -> bool:
             with sqlite3.connect(self.path) as db:
-                ids = db.execute("SELECT id FROM images")
-                for db_id in ids.fetchall():
+                db_ids: sqlite3.Cursor = db.execute("SELECT id FROM images")
+                ids: list[str] = db_ids.fetchall()
+                for db_id in ids:
                     if db_id[0] == id:
                         self.logger.info("Такой элемент существует")
                         self.logger.info(db_id[0])
@@ -34,16 +35,19 @@ class Database:
 
     def is_sended(self, img_path: str) -> bool:
         with sqlite3.connect(self.path) as db:
-            for db_photo in db.execute("SELECT path, is_sended FROM images"):
-                if db_photo[0] == img_path:
-                    return db_photo[1] == 1
+            db_photo: sqlite3.Cursor = db.execute("SELECT path, is_sended FROM images")
+            photo_info:list[tuple[str, int]] = db_photo.fetchall()
+            for info in photo_info:
+                if info[0] == img_path:
+                    return info[1] == 1
             return False
 
 
     def get_last_id(self, purity: str) -> int:
         with sqlite3.connect(self.path) as con:
             cur = con.cursor()
-            nums = cur.execute("SELECT num, purity FROM images ORDER BY num DESC")
+            db_nums = cur.execute("SELECT num, purity FROM images ORDER BY num DESC")
+            nums: list[tuple[int, str]] = db_nums.fetchall()
             for num in nums:
                 if num[1] == purity:
                     return num[0]
@@ -52,7 +56,8 @@ class Database:
     def mark_sended(self, path: str) -> None:
         with sqlite3.connect(self.path) as con:
             cur = con.cursor()
-            paths = cur.execute("SELECT path FROM images")
-            for db_path in paths.fetchall():
-                if db_path[0] == path:
-                    cur.execute("UPDATE images SET is_sended = ? WHERE path = ?", (1, path))
+            db_paths = cur.execute("SELECT path FROM images")
+            paths: list[str] = db_paths.fetchall()
+            for old_path in paths:
+                if old_path[0] == path:
+                    _ = cur.execute("UPDATE images SET is_sended = ? WHERE path = ?", (1, path))

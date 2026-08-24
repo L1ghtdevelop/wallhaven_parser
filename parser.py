@@ -1,6 +1,7 @@
 import json
 import os
 from logging import Logger
+from typing import cast
 
 import requests
 from PIL import Image
@@ -91,7 +92,6 @@ class Parser:
             self.get_purity()
             self.logger.info(self.path)
             response = self.session.get(self.path)
-            json_data = json.loads(response.content)
-            data: dict[dict[str, str], str] = json_data["data"]
+            data: dict[dict[str, str], str] = cast(dict[dict[str, str], str], json.loads(response.content)["data"])
             self.download_images(data)
             self.page += 1
