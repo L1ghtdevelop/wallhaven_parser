@@ -1,31 +1,36 @@
-import aiogram.exceptions as ex
 import os
+from asyncio import sleep
+from logging import Logger
+
+import aiogram.exceptions as ex
+from aiogram import Bot
+from aiogram.types import FSInputFile, InputMediaPhoto
+from aiogram.types.media_union import MediaUnion
+from dotenv import load_dotenv
 
 from database import Database
 
-from aiogram import Bot
-from dotenv import load_dotenv
-from time import sleep
-from aiogram.types import InputMediaPhoto, FSInputFile
-load_dotenv()
+_ = load_dotenv()
 
 class Sender:
-    def __init__(self, logger) -> None:
-        self.logger = logger
-        self.rating = {"nsfw": os.getenv("NSFW_TOPIC"), "sketchy": os.getenv("SKETCHY_TOPIC"), "sfw": os.getenv("SFW_TOPIC")}
-        self.group_id: int = os.getenv("GROUP_ID") # type: ignore
-        self.bot_token: str = os.getenv("BOT_TOKEN") # type: ignore
-        self.db = Database("database/database.db", logger)
-        
-    def get_path_image(self, num, rate):
-        path = f"src/{rate}/img{num}.jpg"
+    def __init__(self, logger: Logger) -> None:
+        self.logger: Logger = logger
+        self.purity: dict[str, int] = {"nsfw": int(os.getenv("NSFW_TOPIC", "1")),
+                                        "sketchy": int(os.getenv("SKETCHY_TOPIC", "2")),
+                                        "sfw": int(os.getenv("SFW_TOPIC", "3"))}
+        self.group_id: int = int(os.getenv("GROUP_ID", "-100"))
+        self.bot_token: str = os.getenv("BOT_TOKEN", "")
+        self.db: Database = Database("database/database.db", logger)
+
+    def get_path_image(self, num: int, purity: str) -> str:
+        path = f"src/{purity}/img{num}.jpg"
         return path
 
-    def set_arr_images(self, rate, start, step):
-        arr = []
+    def set_arr_images(self, purity: str, start: int, step: int) -> list[MediaUnion]:
+        arr: list[MediaUnion] = []
         for j in range(start, start + step):
             self.logger.info(f"{start}, {start + step}")
-            path = self.get_path_image(j, rate)
+            path = self.get_path_image(j, purity)
             self.logger.info(not self.db.is_sended(path))
             if not self.db.is_sended(path):
                 photo = FSInputFile(path)
@@ -36,20 +41,20 @@ class Sender:
                 continue
         return arr
 
-    async def main(self, num, rate):
+    async def main(self, num: int, purity: str) -> None:
         try:
             self.logger.info("Enter to main")
             self.logger.info("Connected to session")
-            async with Bot(self.bot_token) as bot: 
+            async with Bot(self.bot_token) as bot:
                 self.logger.info("Enter to Bot manager")
-                start = 1
-                step = 2
-                max_num = (num // step) + 1
+                start: int = 1
+                step: int = 2
+                max_num: int = (num // step) + 1
                 for i in range(1, max_num):
                     try:
-                        sleep(1)
-                        arr = self.set_arr_images(rate, start, step)
-                        await bot.send_media_group(self.group_id, media=arr, message_thread_id=self.rating[rate]) # type: ignore
+                        await sleep(1)
+                        arr = self.set_arr_images(purity, start, step)
+                        _ = await bot.send_media_group(self.group_id, media=arr, message_thread_id=self.purity[purity])
                         start += step
                         self.logger.info(f"Images group #{i} sended")
                     except ex.TelegramBadRequest as e:

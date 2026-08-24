@@ -1,18 +1,19 @@
+import logging
+
 from dotenv import load_dotenv
+
 from controller import Controller
 from database import Database
 
-import logging
-
 logger = logging.getLogger(__name__)
 
-load_dotenv()
+_ = load_dotenv()
 
 
-def overwrite_logs(path):
+def overwrite_logs(path: str):
     try:
         with open(path, "w") as f:
-            f.write("")
+            _ = f.write("")
     except FileExistsError as e:
         logger.error(e)
 
@@ -25,25 +26,15 @@ if __name__ == "__main__":
     logging.basicConfig(filename=log_path, level=logging.INFO)
     db = Database("database/database.db", logger)
     db.create_table()
-    rating = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
+    purity = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
     try:
-        if rating == "sfw":
-            pass
-        elif rating == "sketchy":
-            pass
-        elif rating == "nsfw":
+        if purity == "sfw" or purity == "sketchy" or purity == "nsfw":
             pass
         else:
             raise TypeError
     except TypeError:
         print("Вы ввели недопустимое значение")
-        rating = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
+        purity = input("Выберете возрастную категорию: sfw/sketchy/nsfw\n")
         logger.error("Вы ввели недопустимое значение")
     controller = Controller(logger)
-    type = input("Вы хотите самому выполнить или отдать в расписание? myself/shedule\n")
-    controller.choose_type(type, rating)
-
-    
-    
-    
-
+    controller.choose_type(purity)
