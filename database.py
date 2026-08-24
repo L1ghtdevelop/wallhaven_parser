@@ -14,11 +14,27 @@ class Database:
             _ = cur.execute("CREATE TABLE IF NOT EXISTS images(num, id PRIMARY KEY, path, is_sended, purity)")
             cur.close()
 
+    def delete_table(self):
+        with sqlite3.connect(self.path) as con:
+            cur = con.cursor()
+            _ = cur.execute("DROP TABLE IF EXISTS images")
+            cur.close()
+
+    def show_table(self):
+        with sqlite3.connect(self.path) as db:
+            cur = db.cursor()
+            db_info = cur.execute("SELECT * FROM images")
+            result:list[tuple[int, str, str, int, str]] = db_info.fetchall()
+            for row in result:
+                print(row)
+                self.logger.info(row)
+
     def add_to_database(self, num: int, id: str, url: str, rate: str):
         with sqlite3.connect(self.path) as con:
             cur = con.cursor()
             _ = cur.execute("INSERT INTO images VALUES(?, ?, ?, ?, ?)", (num, id, url, False, rate))
             con.commit()
+            cur.close()
 
     def has_item(self, id: str) -> bool:
             with sqlite3.connect(self.path) as db:
@@ -42,7 +58,6 @@ class Database:
                     return info[1] == 1
             return False
 
-
     def get_last_id(self, purity: str) -> int:
         with sqlite3.connect(self.path) as con:
             cur = con.cursor()
@@ -50,7 +65,9 @@ class Database:
             nums: list[tuple[int, str]] = db_nums.fetchall()
             for num in nums:
                 if num[1] == purity:
+                    cur.close()
                     return num[0]
+            cur.close()
             return 1
 
     def mark_sended(self, path: str) -> None:
