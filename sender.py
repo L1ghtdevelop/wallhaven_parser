@@ -12,8 +12,7 @@ load_dotenv()
 class Sender:
     def __init__(self, logger) -> None:
         self.logger = logger
-        self.rating = {"nsfw": 239, "sketchy": 243, "sfw": 241}
-
+        self.rating = {"nsfw": os.getenv("NSFW_TOPIC"), "sketchy": os.getenv("SKETCHY_TOPIC"), "sfw": os.getenv("SFW_TOPIC")}
         self.group_id: int = os.getenv("GROUP_ID") # type: ignore
         self.bot_token: str = os.getenv("BOT_TOKEN") # type: ignore
         self.db = Database("database/database.db", logger)
@@ -50,7 +49,7 @@ class Sender:
                     try:
                         sleep(1)
                         arr = self.set_arr_images(rate, start, step)
-                        await bot.send_media_group(self.group_id, media=arr, message_thread_id=self.rating[rate])
+                        await bot.send_media_group(self.group_id, media=arr, message_thread_id=self.rating[rate]) # type: ignore
                         start += step
                         self.logger.info(f"Images group #{i} sended")
                     except ex.TelegramBadRequest as e:
