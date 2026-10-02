@@ -1,0 +1,48 @@
+[project]
+name = "wallhaven-parser"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "l1ghtdevelop", email = "niirokalostas1234@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "aiofiles==25.1.0",
+    "aiogram==3.30.0",
+    "aiohappyeyeballs==2.7.1",
+    "aiohttp==3.14.3",
+    "aiohttp-socks==0.12.0",
+    "aiosignal==1.4.0",
+    "annotated-types==0.8.0",
+    "certifi==2026.7.22",
+    "charset-normalizer==3.5.0",
+    "frozenlist==1.8.0",
+    "httplib2==0.32.0",
+    "idna==3.18",
+    "lxml==6.1.1",
+    "magic-filter==1.0.12",
+    "multidict==6.7.1",
+    "pillow==12.3.0",
+    "pip==24.0",
+    "propcache==0.5.2",
+    "pydantic==2.13.4",
+    "pydantic-core==2.46.4",
+    "pyparsing==3.3.2",
+    "python-dotenv==1.2.3",
+    "requests==2.34.2",
+    "scheduler==0.8.11",
+    "soupsieve==2.9.2",
+    "typeguard==4.6.0",
+    "typing-extensions==4.16.0",
+    "typing-inspection==0.4.4",
+    "urllib3==2.7.0",
+    "yarl==1.24.5",
+]
+
+[project.scripts]
+wallhaven-parser = "wallhaven_parser:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"

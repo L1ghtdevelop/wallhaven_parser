@@ -12,8 +12,7 @@ from database import Database
 class Parser:
 
     def __init__(self, purity: str, to_page: int, logger: Logger) -> None:
-        token: str = str(os.getenv("API_TOKEN"))
-        self.TOKEN: str = token if token else ""
+        self.TOKEN: str = str(os.getenv("API_TOKEN", ""))
 
         self.headers: dict[str, str] = {
                     'User-Agent': "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
