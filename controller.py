@@ -1,4 +1,5 @@
 import asyncio
+import os
 from logging import Logger
 
 from parser import Parser
@@ -10,12 +11,18 @@ class Controller:
         self.logger: Logger = logger
         self.pages: int = 1
         self.num: int = 20
+        self.create_dirs()
+
+    def create_dirs(self):
+        os.makedirs("src/sfw", exist_ok=True)
+        os.makedirs("src/sketchy", exist_ok=True)
+        os.makedirs("src/nsfw", exist_ok=True)
+        os.makedirs("database", exist_ok=True)
 
     def parse(self, purity: str):
         try:
             self.pages = int(input("Сколько страниц вы хотите спарсить?\n"))
             parser = Parser(purity, self.pages, self.logger)
-            parser.create_dirs()
             parser.get_images()
             print("Success")
             self.logger.info(f"Success, parsed pages: {self.pages}")
@@ -39,7 +46,6 @@ class Controller:
         try:
             if job == "parse":
                 self.parse(purity)
-
             elif job == "send":
                 self.send(purity)
             else:

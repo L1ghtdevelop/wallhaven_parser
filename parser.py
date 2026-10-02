@@ -35,12 +35,6 @@ class Parser:
         self.session: requests.Session = requests.Session()
         self.session.headers.update(self.headers)
 
-    def create_dirs(self):
-        os.makedirs("src/sfw", exist_ok=True)
-        os.makedirs("src/sketchy", exist_ok=True)
-        os.makedirs("src/nsfw", exist_ok=True)
-        os.makedirs("database", exist_ok=True)
-
     def get_purity(self):
         match self.purity:
             case "sfw":
@@ -56,10 +50,10 @@ class Parser:
                 self.path = f"https://wallhaven.cc/api/v1/search?page={self.page}?apikey={self.TOKEN}"
 
     def log_image(self, image: dict[str, str]):
-        self.logger.info(image["purity"])
-        self.logger.info(image["url"])
-        self.logger.info(image["category"])
-        self.logger.info(f"Page: {self.page}")
+        self.logger.info(f"""Purity: {image["purity"]}
+            URL: {image["url"]}
+            Category: {image["category"]}
+            Page: {self.page}""")
 
     def compress_image(self, input_path: str, target_quality: int =75):
         try:
