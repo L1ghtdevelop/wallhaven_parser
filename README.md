@@ -12,20 +12,6 @@
   git clone https://github.com/L1ghtdevelop/wallhaven_parser
   cd wallhaven_parser
 ```
-После этого нужно создать виртуальное окружение для этого:
-```bash
-  python -m venv .venv
-  source .venv/bin/acitvate
-```
-Или если у вас линукс:
-```bash
-  python3 -m venv .venv
-  source .venv/bin/acitvate
-```
-После этого надо загрузить все зависимости для этого надо:
-```bash
-  pip install -r requirements.txt
-```
 ## Environment Variables
 После этого создатите в главной директории файл .env 
 Туда нужно написать такие токены и id как:
@@ -36,11 +22,7 @@
 ## Запуск приложения
 После этих настроек с включенным venv Запускаете 
 ```bash
-  python main.py
-```
-Или если у вас линукс 
-```bash
-  python3 main.py
+  uv run main.py
 ```
 После этого вы увидите
 ```bash
@@ -55,4 +37,3 @@
 Или запарсить изображения из выбранной категории
 При **parse** он запарсит одну страницу и сохранит в директорию src/{rating} и при завершении отправит **Success**
 При **send** он отправит эти картинки в группу которая указана в **.env**
-
