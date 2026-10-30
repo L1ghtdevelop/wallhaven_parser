@@ -10,7 +10,7 @@ database.db
 *.so
 # Distribution / packaging
 .Python
-src/
+images/
 build/
 develop-eggs/
 dist/

@@ -1,7 +1,7 @@
 [project]
 name = "wallhaven-parser"
 version = "0.1.0"
-description = "Add your description here"
+description = "Parser and sender from wallhaven, to telegram and your disk"
 readme = "README.md"
 authors = [
     { name = "l1ghtdevelop", email = "niirokalostas1234@gmail.com" }
@@ -17,6 +17,7 @@ dependencies = [
     "annotated-types==0.8.0",
     "certifi==2026.7.22",
     "charset-normalizer==3.5.0",
+    "fake-useragent>=2.2.0",
     "frozenlist==1.8.0",
     "httplib2==0.32.0",
     "idna==3.18",
@@ -46,3 +47,39 @@ wallhaven-parser = "wallhaven_parser:main"
 [build-system]
 requires = ["uv_build>=0.12.9,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+# select = [...]  # See the Default Rules page for the full listing.
+ignore = [
+    "D100",
+    "D101",
+    "D102",
+    "ANN101", # Не требовать тип для 'self' в методах классов
+    "ANN202",
+    "CPY001",
+    "TC003",
+    "ERA001",
+]
+select = ["ALL"]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[\\p{XID_Continue}]*[\\p{XID_Continue}--_]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
