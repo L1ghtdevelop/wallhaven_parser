@@ -53,7 +53,7 @@ class Database:
             ex: sqlite3.Cursor = db.execute(
                 "SELECT is_sended FROM images WHERE path = ?", (img_path,))
             is_sended = ex.fetchone()[0]
-            return bool(is_sended) if is_sended else False
+            return bool(is_sended) or False
 
     def get_last_id(self, purity: str) -> int:
         with sqlite3.connect(self.path) as con:
@@ -61,7 +61,11 @@ class Database:
             db_nums = cur.execute(
             "SELECT num, purity FROM images WHERE purity = ? ORDER BY num DESC LIMIT 1",
                 (purity,))
-            return db_nums.fetchone()[0]
+            last_id = db_nums.fetchone()
+            try:
+                return last_id[0]
+            except TypeError:
+                return 1
 
     def mark_sended(self, path: str) -> None:
         with sqlite3.connect(self.path) as con:

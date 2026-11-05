@@ -1,15 +1,18 @@
+import asyncio
 import json
 import os
 from logging import Logger
 from pathlib import Path
-from typing import cast
 
+import aiofiles
+import aiohttp
 import requests
 from fake_useragent import UserAgent
 from PIL import Image
 
 from wallhaven_parser.database import Database
 
+SUCCESS_RESPONSE = 200
 
 class Parser:
 
@@ -42,7 +45,23 @@ class Parser:
     def get_link_response(self) -> str:
         return self.path
 
-    def get_purity(self) -> None:
+    def get_format_data(self) -> list:
+        response = self.session.get(self.path)
+        data = json.loads(response.content)["data"]
+        result = []
+        for element in data:
+            res = {"id": element["id"],
+                "path": element["path"],
+                "purity": element["purity"],
+                "url": element["url"],
+            }
+            result.append(res)
+        return result
+
+    def get_save_path(self) -> Path:
+        return Path(f"images/{self.purity.lower()}/img{self.num_img}.jpg")
+
+    def update_path(self) -> None:
         """Set a purity for a parse images."""
         match self.purity:
             case "sfw":
@@ -60,9 +79,7 @@ class Parser:
     def log_image(self, image: dict[str, str]) -> None:
         self.logger.info("""Purity: %s
             URL: %s
-            Category: %s
-            Page: %s""", {image["purity"]}, {image["url"]},
-            {image["category"]}, {self.page})
+            Page: %s""", image["purity"], image["url"], self.page)
 
     def compress_image(self, input_path: Path, target_quality: int =75) -> None:
         try:
@@ -73,14 +90,17 @@ class Parser:
         except Image.DecompressionBombWarning:
             self.logger.info(input_path)
 
-    def download_images(self, data: dict[dict[str, str], str]) -> None:
-        # Получает список, который можно получить в функции get_images
+    def set_num_img(self) -> None:
         if self.db.get_last_id(self.purity) > 1:
             self.num_img = self.db.get_last_id(self.purity) + 1
         else:
             self.num_img = 1
+
+    def download_images(self, data: list) -> None:
+        # Получает список, который можно получить в функции get_images
+        self.set_num_img()
         for image in data:
-            save_path = Path(f"images/{self.purity.lower()}/img{self.num_img}.jpg")
+            save_path = self.get_save_path()
             if not self.db.has_item(image["id"]):
                 path: str = str(image["path"])
                 image_id = image["id"]
@@ -96,11 +116,31 @@ class Parser:
     def get_images(self) -> None:
     # Парсит запрос и выдает список, который можно отдать функции скачивания картинок
         while self.page <= self.to_page:
-            self.get_purity()
+            self.update_path()
             self.logger.info(self.path)
-            response = self.session.get(self.path)
-            data: dict[dict[str, str], str] = (
-                cast("dict[dict[str, str], str]", json.loads(response.content)["data"])
-            )
-            self.download_images(data)
+            self.download_images(self.get_format_data())
             self.page += 1
+
+    async def async_get_images(self) -> None:
+        async with aiohttp.ClientSession() as session:
+            while self.page <= self.to_page:
+                tasks = []
+                self.update_path()
+                response = await session.get(self.path)
+                data = await response.json()
+                for element in data["data"]:
+                    task = self.async_download_image(element, session)
+                    tasks.append(task)
+                await asyncio.gather(*tasks)
+                self.page += 1
+
+    async def async_download_image(self, image: dict,
+        session: aiohttp.ClientSession) -> None:
+        if not self.db.has_item(image["id"]):
+            resource = await session.get(image["path"])
+            content = await resource.content.read()
+            async with aiofiles.open(self.get_save_path(), "wb") as file:
+                self.logger.info(image)
+                self.logger.info(resource)
+                await file.write(content)
+                self.num_img += 1

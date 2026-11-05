@@ -1,2 +1,2 @@
 """Init file."""
-from .main import main as main
+from .main import run as run
